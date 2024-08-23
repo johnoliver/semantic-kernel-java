@@ -80,7 +80,7 @@ public class RedisHashSetVectorStoreRecordCollectionTest {
                 .withName("rating")
                 .withFieldType(Double.class)
                 .build());
-        VectorStoreRecordDefinition recordDefinition = VectorStoreRecordDefinition.fromFields(fields);
+        VectorStoreRecordDefinition recordDefinition = VectorStoreRecordDefinition.fromFields(fields, Hotel.class);
 
         optionsMap.put(RecordCollectionOptions.WITH_CUSTOM_DEFINITION, RedisHashSetVectorStoreRecordCollectionOptions.<Hotel>builder()
                 .withRecordClass(Hotel.class)

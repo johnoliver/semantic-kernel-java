@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.microsoft.semantickernel.data.recordattributes.VectorStoreRecordDataAttribute;
 import com.microsoft.semantickernel.data.recordattributes.VectorStoreRecordKeyAttribute;
 import com.microsoft.semantickernel.data.recordattributes.VectorStoreRecordVectorAttribute;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,9 +17,11 @@ import java.util.stream.Collectors;
  * Represents a definition of a vector store record.
  */
 public class VectorStoreRecordDefinition {
+
     private final VectorStoreRecordKeyField keyField;
     private final List<VectorStoreRecordDataField> dataFields;
     private final List<VectorStoreRecordVectorField> vectorFields;
+    private final Class<?> recordClass;
 
     public VectorStoreRecordKeyField getKeyField() {
         return keyField;
@@ -32,6 +33,7 @@ public class VectorStoreRecordDefinition {
 
     /**
      * Gets the vector fields in the record definition.
+     *
      * @return List of VectorStoreRecordVectorField
      */
     public List<VectorStoreRecordVectorField> getVectorFields() {
@@ -40,6 +42,7 @@ public class VectorStoreRecordDefinition {
 
     /**
      * Gets all fields in the record definition.
+     *
      * @return List of VectorStoreRecordField
      */
     public List<VectorStoreRecordField> getAllFields() {
@@ -60,30 +63,35 @@ public class VectorStoreRecordDefinition {
     private VectorStoreRecordDefinition(
         VectorStoreRecordKeyField keyField,
         List<VectorStoreRecordDataField> dataFields,
-        List<VectorStoreRecordVectorField> vectorFields) {
+        List<VectorStoreRecordVectorField> vectorFields,
+        Class<?> recordClass) {
         this.keyField = keyField;
         this.dataFields = dataFields;
         this.vectorFields = vectorFields;
+        this.recordClass = recordClass;
     }
 
     private static VectorStoreRecordDefinition checkFields(
         List<VectorStoreRecordKeyField> keyFields,
         List<VectorStoreRecordDataField> dataFields,
-        List<VectorStoreRecordVectorField> vectorFields) {
+        List<VectorStoreRecordVectorField> vectorFields,
+        Class<?> recordClass) {
         if (keyFields.size() != 1) {
             throw new IllegalArgumentException("Exactly one key field is required");
         }
 
         return new VectorStoreRecordDefinition(keyFields.iterator().next(), dataFields,
-            vectorFields);
+            vectorFields, recordClass);
     }
 
     /**
      * Create a VectorStoreRecordDefinition from a collection of fields.
+     *
      * @param fields The fields to create the definition from.
      * @return VectorStoreRecordDefinition
      */
-    public static VectorStoreRecordDefinition fromFields(List<VectorStoreRecordField> fields) {
+    public static VectorStoreRecordDefinition fromFields(List<VectorStoreRecordField> fields,
+        Class<?> recordClass) {
         List<VectorStoreRecordKeyField> keyFields = fields.stream()
             .filter(p -> p instanceof VectorStoreRecordKeyField)
             .map(p -> (VectorStoreRecordKeyField) p)
@@ -99,11 +107,12 @@ public class VectorStoreRecordDefinition {
             .map(p -> (VectorStoreRecordVectorField) p)
             .collect(Collectors.toList());
 
-        return checkFields(keyFields, dataFields, vectorFields);
+        return checkFields(keyFields, dataFields, vectorFields, recordClass);
     }
 
     /**
      * Create a VectorStoreRecordDefinition from a model.
+     *
      * @param recordClass The model class to create the definition from.
      * @return VectorStoreRecordDefinition
      */
@@ -171,7 +180,7 @@ public class VectorStoreRecordDefinition {
             }
         }
 
-        return checkFields(keyFields, dataFields, vectorFields);
+        return checkFields(keyFields, dataFields, vectorFields, recordClass);
     }
 
     public static void validateSupportedTypes(List<VectorStoreRecordField> fields,
@@ -189,5 +198,9 @@ public class VectorStoreRecordDefinition {
                     unsupportedTypes.stream().map(Class::getName).collect(Collectors.joining(", ")),
                     supportedTypes.stream().map(Class::getName).collect(Collectors.joining(", "))));
         }
+    }
+
+    public Class<?> getRecordClass() {
+        return recordClass;
     }
 }
