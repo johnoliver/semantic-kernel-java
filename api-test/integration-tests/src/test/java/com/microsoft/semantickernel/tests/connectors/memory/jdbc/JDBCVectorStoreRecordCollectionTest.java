@@ -72,7 +72,6 @@ public class JDBCVectorStoreRecordCollectionTest {
                 throw new IllegalArgumentException("Unknown query provider: " + provider);
         }
 
-
         JDBCVectorStoreRecordCollection<Hotel> recordCollection =  new JDBCVectorStoreRecordCollection<>(
                 dataSource,
                 collectionName,

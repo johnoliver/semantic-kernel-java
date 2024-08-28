@@ -7,10 +7,20 @@ import com.microsoft.semantickernel.builders.SemanticKernelBuilder;
  * Options for getting a record.
  */
 public class GetRecordOptions {
+
     private final boolean includeVectors;
 
-    private GetRecordOptions(boolean includeVectors) {
+    private final boolean wildcardKeyMatching;
+
+    private GetRecordOptions(
+        boolean includeVectors,
+        boolean wildcardKeyMatching) {
         this.includeVectors = includeVectors;
+        this.wildcardKeyMatching = wildcardKeyMatching;
+    }
+
+    public boolean isWildcardKeyMatching() {
+        return wildcardKeyMatching;
     }
 
     /**
@@ -23,7 +33,9 @@ public class GetRecordOptions {
     }
 
     public static class Builder implements SemanticKernelBuilder<GetRecordOptions> {
+
         private boolean includeVectors;
+        private boolean wildcardKeyMatching = false;
 
         /**
          * Sets whether to include vectors.
@@ -37,13 +49,25 @@ public class GetRecordOptions {
         }
 
         /**
+         * Sets whether to use wildcard key matching. Default is false. Wildcard key matching allows
+         * for matching multiple ids, for instance using "LIKE 'a%'" on a SQL query.
+         *
+         * @param wildcardKeyMatching whether to use wildcard key matching
+         * @return GetRecordOptions.Builder
+         */
+        public Builder setWildcardKeyMatching(boolean wildcardKeyMatching) {
+            this.wildcardKeyMatching = wildcardKeyMatching;
+            return this;
+        }
+
+        /**
          * Builds the options.
          *
          * @return GetRecordOptions
          */
         @Override
         public GetRecordOptions build() {
-            return new GetRecordOptions(includeVectors);
+            return new GetRecordOptions(includeVectors, wildcardKeyMatching);
         }
     }
 

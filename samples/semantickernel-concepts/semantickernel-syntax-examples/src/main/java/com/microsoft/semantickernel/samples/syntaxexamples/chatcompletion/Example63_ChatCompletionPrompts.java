@@ -19,7 +19,7 @@ public class Example63_ChatCompletionPrompts {
     // Only required if AZURE_CLIENT_KEY is set
     private static final String CLIENT_ENDPOINT = System.getenv("CLIENT_ENDPOINT");
     private static final String MODEL_ID = System.getenv()
-        .getOrDefault("MODEL_ID", "gpt-35-turbo");
+        .getOrDefault("MODEL_ID", "gpt-35-turbo-2");
 
     public static void main(String[] args) throws InterruptedException {
 
