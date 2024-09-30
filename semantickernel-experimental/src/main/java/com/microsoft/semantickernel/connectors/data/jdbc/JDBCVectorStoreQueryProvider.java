@@ -242,7 +242,12 @@ public class JDBCVectorStoreQueryProvider
             PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setObject(1, collectionName);
 
-            return statement.executeQuery().next();
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt(1) == 1;
+            } else {
+                return false;
+            }
         } catch (SQLException e) {
             throw new SKException("Failed to check if collection exists", e);
         }
@@ -497,8 +502,8 @@ public class JDBCVectorStoreQueryProvider
      *
      * @param <Record>         the record type
      * @param collectionName   the collection name
-     * @param vector the vector to search with
-     * @param options the search options
+     * @param vector           the vector to search with
+     * @param options          the search options
      * @param recordDefinition the record definition
      * @param mapper           the mapper, responsible for mapping the result set to the record
      *                         type.
