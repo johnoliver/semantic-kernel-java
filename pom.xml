@@ -78,6 +78,9 @@
         <module>data/semantickernel-data-jdbc</module>
         <module>data/semantickernel-data-redis</module>
         <module>agents/semantickernel-agents-core</module>
+        <module>agents/agent-framework-api</module>
+        <module>agents/agent-framework</module>
+        <module>agents/agent-framework-integration-test</module>
     </modules>
 
     <dependencyManagement>

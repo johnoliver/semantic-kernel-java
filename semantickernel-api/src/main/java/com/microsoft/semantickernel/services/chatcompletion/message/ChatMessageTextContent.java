@@ -9,6 +9,7 @@ import com.microsoft.semantickernel.services.chatcompletion.AuthorRole;
 import com.microsoft.semantickernel.services.chatcompletion.ChatMessageContent;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
@@ -31,7 +32,7 @@ public class ChatMessageTextContent extends ChatMessageContent<String> {
         @Nullable String modelId,
         @Nullable Charset encoding,
         @Nullable FunctionResultMetadata metadata) {
-        super(authorRole, content, modelId, null, encoding, metadata,
+        super(UUID.randomUUID().toString(), authorRole, content, modelId, null, encoding, metadata,
             ChatMessageContentType.TEXT);
     }
 

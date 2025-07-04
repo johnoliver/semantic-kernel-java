@@ -6,6 +6,7 @@ import com.microsoft.semantickernel.services.chatcompletion.AuthorRole;
 import com.microsoft.semantickernel.services.chatcompletion.StreamingChatContent;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -16,21 +17,22 @@ import javax.annotation.Nullable;
 public class OpenAIStreamingChatMessageContent<T> extends OpenAIChatMessageContent<T> implements
     StreamingChatContent<T> {
 
-    private final String id;
+    private final Optional<String> id;
 
     /**
      * Creates a new instance of the {@link OpenAIChatMessageContent} class.
      *
-     * @param id                  The id of the message.
-     * @param authorRole          The author role that generated the content.
-     * @param content             The content.
-     * @param modelId             The model id.
-     * @param innerContent        The inner content.
-     * @param encoding            The encoding.
-     * @param metadata            The metadata.
-     * @param toolCall            The tool call.
+     * @param id           The id of the message.
+     * @param authorRole   The author role that generated the content.
+     * @param content      The content.
+     * @param modelId      The model id.
+     * @param innerContent The inner content.
+     * @param encoding     The encoding.
+     * @param metadata     The metadata.
+     * @param toolCall     The tool call.
      */
     public OpenAIStreamingChatMessageContent(
+        @Nullable
         String id,
         AuthorRole authorRole,
         String content,
@@ -40,6 +42,7 @@ public class OpenAIStreamingChatMessageContent<T> extends OpenAIChatMessageConte
         @Nullable FunctionResultMetadata metadata,
         @Nullable List<OpenAIFunctionToolCall> toolCall) {
         super(
+            id,
             authorRole,
             content,
             modelId,
@@ -48,11 +51,11 @@ public class OpenAIStreamingChatMessageContent<T> extends OpenAIChatMessageConte
             metadata,
             toolCall);
 
-        this.id = id;
+        this.id = Optional.ofNullable(id);
     }
 
     @Override
-    public String getId() {
+    public Optional<String> getId() {
         return id;
     }
 }

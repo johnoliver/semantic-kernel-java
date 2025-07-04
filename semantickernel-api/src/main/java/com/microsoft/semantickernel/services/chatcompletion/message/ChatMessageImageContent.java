@@ -7,6 +7,7 @@ import com.microsoft.semantickernel.services.chatcompletion.AuthorRole;
 import com.microsoft.semantickernel.services.chatcompletion.ChatMessageContent;
 import java.net.URL;
 import java.util.Base64;
+import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
@@ -20,15 +21,17 @@ public class ChatMessageImageContent<T> extends ChatMessageContent<T> {
 
     /**
      * Create a new instance of the {@link ChatMessageImageContent} class.
+     *
      * @param content The chat message content
      * @param modelId The LLM id to use for the chat
-     * @param detail The detail level of the image to include in the chat message
+     * @param detail  The detail level of the image to include in the chat message
      */
     public ChatMessageImageContent(
         String content,
         @Nullable String modelId,
         @Nullable ImageDetail detail) {
         super(
+            UUID.randomUUID().toString(),
             AuthorRole.USER,
             content,
             modelId,
@@ -82,6 +85,7 @@ public class ChatMessageImageContent<T> extends ChatMessageContent<T> {
 
     /**
      * Builder for the {@link ChatMessageImageContent} class.
+     *
      * @param <T> the type of the inner content within the message
      */
     public static class Builder<T> implements SemanticKernelBuilder<ChatMessageImageContent<T>> {
@@ -106,6 +110,7 @@ public class ChatMessageImageContent<T> extends ChatMessageContent<T> {
 
         /**
          * Set the image content to include in the chat message.
+         *
          * @param imageType For instance jpg or png. For known types known to OpenAI see: <a
          *                  href="https://platform.openai.com/docs/guides/vision/what-type-of-files-can-i-upload">docs</a>.
          * @param content   the image content

@@ -194,6 +194,11 @@
                 <artifactId>jsr305</artifactId>
                 <version>3.0.2</version>
             </dependency>
+            <dependency>
+                <groupId>io.projectreactor</groupId>
+                <artifactId>reactor-core</artifactId>
+                <version>3.7.7</version>
+            </dependency>
 
             <!-- Required for Android -->
             <dependency>

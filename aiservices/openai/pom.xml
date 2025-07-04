@@ -24,6 +24,11 @@
             <artifactId>azure-ai-openai</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-ai-openai-assistants</artifactId>
+            <version>1.0.0-beta.5</version>
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <scope>compile</scope>

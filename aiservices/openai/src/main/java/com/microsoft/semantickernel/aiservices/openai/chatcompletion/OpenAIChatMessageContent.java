@@ -31,6 +31,7 @@ public class OpenAIChatMessageContent<T> extends ChatMessageContent<T> {
      * @param toolCall     The tool call.
      */
     public OpenAIChatMessageContent(
+        String id,
         AuthorRole authorRole,
         String content,
         @Nullable String modelId,
@@ -38,7 +39,7 @@ public class OpenAIChatMessageContent<T> extends ChatMessageContent<T> {
         @Nullable Charset encoding,
         @Nullable FunctionResultMetadata<?> metadata,
         @Nullable List<OpenAIFunctionToolCall> toolCall) {
-        super(authorRole, content, modelId, innerContent, encoding, metadata);
+        super(id, authorRole, content, modelId, innerContent, encoding, metadata);
 
         if (toolCall == null) {
             this.toolCall = null;

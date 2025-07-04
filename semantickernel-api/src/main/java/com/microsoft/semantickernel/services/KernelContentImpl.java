@@ -69,4 +69,7 @@ public abstract class KernelContentImpl<T> implements KernelContent<T> {
         return metadata;
     }
 
+    public String getModelId() {
+        return modelId;
+    }
 }

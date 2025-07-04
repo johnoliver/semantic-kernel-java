@@ -82,6 +82,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.CheckReturnValue;
@@ -738,6 +739,7 @@ public class OpenAIChatCompletion extends OpenAiService<OpenAIAsyncClient>
             .map(response -> {
                 try {
                     return new OpenAIChatMessageContent<>(
+                        UUID.randomUUID().toString(),
                         AuthorRole.ASSISTANT,
                         response.getContent(),
                         this.getModelId(),
@@ -764,6 +766,7 @@ public class OpenAIChatCompletion extends OpenAiService<OpenAIAsyncClient>
                 .map(message -> {
                     if (message instanceof ChatRequestUserMessage) {
                         return new OpenAIChatMessageContent<>(
+                            UUID.randomUUID().toString(),
                             AuthorRole.USER,
                             BinaryDataUtils
                                 .toString(((ChatRequestUserMessage) message).getContent()),
@@ -774,6 +777,7 @@ public class OpenAIChatCompletion extends OpenAiService<OpenAIAsyncClient>
                             null);
                     } else if (message instanceof ChatRequestSystemMessage) {
                         return new OpenAIChatMessageContent<>(
+                            UUID.randomUUID().toString(),
                             AuthorRole.SYSTEM,
                             BinaryDataUtils
                                 .toString(((ChatRequestSystemMessage) message).getContent()),
@@ -787,6 +791,7 @@ public class OpenAIChatCompletion extends OpenAiService<OpenAIAsyncClient>
                             List<OpenAIFunctionToolCall> calls = getToolCalls(
                                 ((ChatRequestAssistantMessage) message).getToolCalls());
                             return new OpenAIChatMessageContent<>(
+                                UUID.randomUUID().toString(),
                                 AuthorRole.ASSISTANT,
                                 BinaryDataUtils
                                     .toString(((ChatRequestAssistantMessage) message).getContent()),
@@ -800,6 +805,7 @@ public class OpenAIChatCompletion extends OpenAiService<OpenAIAsyncClient>
                         }
                     } else if (message instanceof ChatRequestToolMessage) {
                         return new OpenAIChatMessageContent<>(
+                            UUID.randomUUID().toString(),
                             AuthorRole.TOOL,
                             BinaryDataUtils
                                 .toString(((ChatRequestToolMessage) message).getContent()),

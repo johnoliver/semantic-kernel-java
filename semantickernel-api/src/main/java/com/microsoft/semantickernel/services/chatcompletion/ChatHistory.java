@@ -9,16 +9,24 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.SortedSet;
 import java.util.Spliterator;
+import java.util.TreeSet;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 /**
  * Provides a history of messages between the User, Assistant and System
  */
 public class ChatHistory implements Iterable<ChatMessageContent<?>> {
 
+    // Holds messages in FIFO order
     private final List<ChatMessageContent<?>> chatMessageContents;
+    // Object used for synchronization
+    private final Object syncLock = new Object();
 
     /**
      * The default constructor
@@ -35,9 +43,19 @@ public class ChatHistory implements Iterable<ChatMessageContent<?>> {
     public ChatHistory(@Nullable String instructions) {
         this.chatMessageContents = Collections.synchronizedList(new ArrayList<>());
         if (instructions != null) {
-            this.chatMessageContents.add(
-                ChatMessageTextContent.systemMessage(instructions));
+            this.chatMessageContents.add(ChatMessageTextContent.systemMessage(instructions));
         }
+    }
+
+    private static <T extends ChatMessageContent<?>> SortedSet<T> createSet(
+        List<T> chatMessageContents) {
+
+        TreeSet<T> set = new TreeSet<>(
+            (o1, o2) -> o1.getId().get().compareTo(o2.getId().get())
+        );
+
+        set.addAll(chatMessageContents);
+        return set;
     }
 
     /**
@@ -46,8 +64,36 @@ public class ChatHistory implements Iterable<ChatMessageContent<?>> {
      * @param chatMessageContents The chat message contents to add to the chat history
      */
     public ChatHistory(List<? extends ChatMessageContent<?>> chatMessageContents) {
+        assertIdsAreUnique(chatMessageContents);
         this.chatMessageContents = Collections
             .synchronizedList(new ArrayList<>(chatMessageContents));
+    }
+
+    private boolean containsId(Optional<String> id) {
+        if (!id.isPresent()) {
+            return false;
+        }
+        return chatMessageContents
+            .stream()
+            .anyMatch(message -> message.getId().equals(id));
+    }
+
+    private void assertIdsAreUnique(List<? extends ChatMessageContent<?>> chatMessageContents) {
+        chatMessageContents
+            .stream()
+            .map(ChatMessageContent::getId)
+            .map(id -> Tuples.of(id, 1))
+            .collect(Collectors.toMap(Tuple2::getT1, Tuple2::getT2, Integer::sum))
+            .forEach((id, count) -> {
+                if (count > 1) {
+                    throw new IllegalArgumentException(
+                        "ChatMessageContent IDs must be unique. Found duplicate ID: " + id);
+                }
+            });
+    }
+
+    public ChatHistory(ChatMessageContent<?> message) {
+        this.chatMessageContents = Collections.singletonList(message);
     }
 
     /**
@@ -72,17 +118,10 @@ public class ChatHistory implements Iterable<ChatMessageContent<?>> {
             .of(chatMessageContents.get(chatMessageContents.size() - 1));
     }
 
-    /**
-     * Add all messages from the given chat history to this chat history
-     *
-     * @param value The chat history to add to this chat history
-     */
-    public void addAll(ChatHistory value) {
-        this.chatMessageContents.addAll(value.getMessages());
-    }
 
     /**
      * Create an {@code Iterator} from the chat history.
+     *
      * @return An {@code Iterator} from the chat history.
      */
     @Override
@@ -102,6 +141,7 @@ public class ChatHistory implements Iterable<ChatMessageContent<?>> {
 
     /**
      * Create a {@code Spliterator} from the chat history
+     *
      * @return A {@code Spliterator} from the chat history
      */
     @Override
@@ -120,14 +160,16 @@ public class ChatHistory implements Iterable<ChatMessageContent<?>> {
      */
     public ChatHistory addMessage(AuthorRole authorRole, String content, Charset encoding,
         FunctionResultMetadata<?> metadata) {
-        chatMessageContents.add(
-            ChatMessageTextContent.builder()
-                .withAuthorRole(authorRole)
-                .withContent(content)
-                .withEncoding(encoding)
-                .withMetadata(metadata)
-                .build());
-        return this;
+        synchronized (syncLock) {
+            chatMessageContents.add(
+                ChatMessageTextContent.builder()
+                    .withAuthorRole(authorRole)
+                    .withContent(content)
+                    .withEncoding(encoding)
+                    .withMetadata(metadata)
+                    .build());
+            return this;
+        }
     }
 
     /**
@@ -138,12 +180,14 @@ public class ChatHistory implements Iterable<ChatMessageContent<?>> {
      * @return {@code this} ChatHistory
      */
     public ChatHistory addMessage(AuthorRole authorRole, String content) {
-        chatMessageContents.add(
-            ChatMessageTextContent.builder()
-                .withAuthorRole(authorRole)
-                .withContent(content)
-                .build());
-        return this;
+        synchronized (syncLock) {
+            chatMessageContents.add(
+                ChatMessageTextContent.builder()
+                    .withAuthorRole(authorRole)
+                    .withContent(content)
+                    .build());
+            return this;
+        }
     }
 
     /**
@@ -153,8 +197,15 @@ public class ChatHistory implements Iterable<ChatMessageContent<?>> {
      * @return {@code this} ChatHistory
      */
     public ChatHistory addMessage(ChatMessageContent<?> content) {
-        chatMessageContents.add(content);
-        return this;
+        synchronized (syncLock) {
+            if (containsId(content.getId())) {
+                throw new IllegalArgumentException(
+                    "ChatMessageContent with ID " + content.getId()
+                        + " already exists in chat history");
+            }
+            chatMessageContents.add(content);
+            return this;
+        }
     }
 
     /**
@@ -191,16 +242,128 @@ public class ChatHistory implements Iterable<ChatMessageContent<?>> {
      * Clear the chat history
      */
     public void clear() {
-        chatMessageContents.clear();
+        synchronized (syncLock) {
+            chatMessageContents.clear();
+        }
     }
 
     /**
      * Add all messages to the chat history
+     *
      * @param messages The messages to add to the chat history
      * @return {@code this} ChatHistory
      */
     public ChatHistory addAll(List<ChatMessageContent<?>> messages) {
-        chatMessageContents.addAll(messages);
-        return this;
+        if (messages == null || messages.isEmpty()) {
+            return this;
+        }
+
+        assertIdsAreUnique(messages);
+
+        synchronized (syncLock) {
+            messages
+                .stream()
+                .filter(message -> !containsId(message.getId()))
+                .forEach(chatMessageContents::add);
+
+            return this;
+        }
+    }
+
+    public boolean isEmpty() {
+        return chatMessageContents.isEmpty();
+    }
+
+    public void add(ChatMessageContent chatMessageContent) {
+        synchronized (syncLock) {
+            chatMessageContents.add(chatMessageContent);
+        }
+    }
+
+    /**
+     * Add all messages from the given chat history to this chat history
+     *
+     * @param value The chat history to add to this chat history
+     */
+    public void addAll(ChatHistory value) {
+        addAll(value.getMessages());
+    }
+
+    /**
+     * Add all messages that are not already present in the chat history
+     *
+     * @param messages The messages to add to the chat history if not already present
+     */
+    public void addAllIfMissing(List<ChatMessageContent<?>> messages) {
+        if (messages == null || messages.isEmpty()) {
+            return;
+        }
+
+        synchronized (syncLock) {
+            for (ChatMessageContent<?> message : messages) {
+                if (!containsMessage(message)) {
+                    chatMessageContents.add(message);
+                }
+            }
+        }
+    }
+
+    /**
+     * Checks if the chat history contains a message with the same content and author or message id
+     *
+     * @param message The message to check
+     * @return true if a message with the same content and author exists, false otherwise
+     */
+    public boolean containsMessage(ChatMessageContent<?> message) {
+        if (message == null) {
+            return false;
+        }
+
+        synchronized (syncLock) {
+            return chatMessageContents
+                .stream()
+                .anyMatch(existingMessage ->
+                    existingMessage.getId() == message.getId() ||
+                        existingMessage.getAuthorRole() == message.getAuthorRole() &&
+                            existingMessage.getContent().equals(message.getContent())
+                );
+        }
+    }
+
+    /**
+     * Asserts that the provided messages match the first n messages in the chat history.
+     *
+     * @param messages
+     * @return
+     */
+    public boolean assertHeadMatches(List<ChatMessageContent<?>> messages) {
+        if (messages == null || messages.isEmpty()) {
+            return true;
+        }
+
+        synchronized (syncLock) {
+            if (messages.size() > chatMessageContents.size()) {
+                return false;
+            }
+
+            for (int i = 0; i < messages.size(); i++) {
+                ChatMessageContent<?> expected = messages.get(i);
+                ChatMessageContent<?> actual = chatMessageContents.get(i);
+
+                if (expected.getAuthorRole() != actual.getAuthorRole() ||
+                    !expected.getContent().equals(actual.getContent())) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    public void addIfMissing(ChatMessageContent<?> message) {
+        synchronized (syncLock) {
+            if (!containsMessage(message)) {
+                chatMessageContents.add(message);
+            }
+        }
     }
 }

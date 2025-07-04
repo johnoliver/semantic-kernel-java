@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
@@ -23,6 +25,9 @@ import javax.annotation.Nullable;
  * @param <T> the type of the inner content within the messages
  */
 public class ChatMessageContent<T> extends KernelContentImpl<T> {
+
+    private final Optional<String> id;
+
     private final AuthorRole authorRole;
     @Nullable
     private final String content;
@@ -43,6 +48,7 @@ public class ChatMessageContent<T> extends KernelContentImpl<T> {
         AuthorRole authorRole,
         String content) {
         this(
+            null,
             authorRole,
             content,
             null,
@@ -51,21 +57,14 @@ public class ChatMessageContent<T> extends KernelContentImpl<T> {
             null);
     }
 
-    /**
-     * Creates a new instance of the {@link ChatMessageContent} class. Defaults to
-     * {@link ChatMessageContentType#TEXT} content type.
-     *
-     * @param authorRole the author role that generated the content
-     * @param authorName the author name
-     * @param content    the content
-     */
     public ChatMessageContent(
+        @Nullable
+        String id,
         AuthorRole authorRole,
-        String authorName,
         String content) {
         this(
+            id,
             authorRole,
-            authorName,
             content,
             null,
             null,
@@ -85,13 +84,15 @@ public class ChatMessageContent<T> extends KernelContentImpl<T> {
      * @param metadata     the metadata
      */
     public ChatMessageContent(
+        @Nullable
+        String id,
         AuthorRole authorRole,
         String content,
         @Nullable String modelId,
         @Nullable T innerContent,
         @Nullable Charset encoding,
         @Nullable FunctionResultMetadata metadata) {
-        this(authorRole, content, modelId, innerContent, encoding, metadata,
+        this(id, authorRole, content, modelId, innerContent, encoding, metadata,
             ChatMessageContentType.TEXT);
     }
 
@@ -107,6 +108,8 @@ public class ChatMessageContent<T> extends KernelContentImpl<T> {
      * @param contentType  the content type
      */
     public ChatMessageContent(
+        @Nullable
+        String id,
         AuthorRole authorRole,
         String content,
         @Nullable String modelId,
@@ -115,6 +118,7 @@ public class ChatMessageContent<T> extends KernelContentImpl<T> {
         @Nullable FunctionResultMetadata metadata,
         ChatMessageContentType contentType) {
         super(innerContent, modelId, metadata);
+        this.id = Optional.ofNullable(id);
         this.authorRole = authorRole;
         this.content = content;
         this.encoding = encoding != null ? encoding : StandardCharsets.UTF_8;
@@ -134,6 +138,8 @@ public class ChatMessageContent<T> extends KernelContentImpl<T> {
      * @param contentType  the content type
      */
     public ChatMessageContent(
+        @Nullable
+        String id,
         AuthorRole authorRole,
         @Nullable List<KernelContent<T>> items,
         String modelId,
@@ -142,6 +148,7 @@ public class ChatMessageContent<T> extends KernelContentImpl<T> {
         FunctionResultMetadata metadata,
         ChatMessageContentType contentType) {
         super(innerContent, modelId, metadata);
+        this.id = Optional.ofNullable(id);
         this.content = null;
         this.authorRole = authorRole;
         this.encoding = encoding != null ? encoding : StandardCharsets.UTF_8;
@@ -205,9 +212,29 @@ public class ChatMessageContent<T> extends KernelContentImpl<T> {
         return contentType;
     }
 
+    public Optional<String> getId() {
+        return id;
+    }
+
     @Override
     public String toString() {
         return content != null ? content : "";
     }
 
+    public ChatMessageContent<T> withId(Supplier<String> id) {
+        if (this.id.isPresent()) {
+            return this;
+        }
+
+        return new ChatMessageContent<T>(
+            id.get(),
+            this.authorRole,
+            this.content,
+            this.getModelId(),
+            this.getInnerContent(),
+            this.encoding,
+            this.getMetadata(),
+            this.contentType
+        );
+    }
 }

@@ -18,6 +18,7 @@ import com.microsoft.semantickernel.services.chatcompletion.AuthorRole;
 import com.microsoft.semantickernel.services.chatcompletion.ChatHistory;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import reactor.core.publisher.Mono;
@@ -35,6 +36,7 @@ public class OpenAiChatCompletionTest {
             "What is the name of the pet with id ca2fc6bc-1307-4da6-a009-d7bf88dec37b?");
 
         chatHistory.addMessage(new OpenAIChatMessageContent(
+            UUID.randomUUID().toString(),
             AuthorRole.ASSISTANT,
             "",
             "test",
@@ -50,6 +52,7 @@ public class OpenAiChatCompletionTest {
                         .withVariable("id", "ca2fc6bc-1307-4da6-a009-d7bf88dec37b")
                         .build()))));
         chatHistory.addMessage(new OpenAIChatMessageContent(
+            UUID.randomUUID().toString(),
             AuthorRole.TOOL,
             "Snuggles",
             "test",
